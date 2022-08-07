@@ -28,35 +28,48 @@ describe('Event sourced TODO', () => {
     it('should allow to add a todo', () => {
         const todoId = newId()
         const events = es.handle({__type: 'AddTodo', id: todoId, name: 'my new Todo'})
-
         expect(events).toEqual([{__type: 'TodoAdded', id: todoId, name: 'my new Todo'}])
     })
 
     it('should allow to toggle a todo', () => {
         const todoId = newId()
-        alreadyHappen([{
-            __type: 'TodoAdded',
-            id: todoId,
-            name: 'my new Todo'
-        }]);
+        aTodoAlreadyExists({id: todoId, name: 'my new Todo'});
 
-        const events = es.handle({__type: 'ToggleTodo', id: todoId, name: 'my new Todo'})
+        const events = es.handle({__type: 'ToggleTodo', id: todoId})
 
-        expect(events).toEqual([{__type: 'TodoToggled', id: todoId, name: 'my new Todo'}])
+        expect(events).toEqual([{__type: 'TodoToggled', id: todoId}])
+    })
+
+    it('should forbid to toggle an unknown todo', () => {
+        expectUnknownTodoError(() => es.handle({
+            __type: 'ToggleTodo',
+            id: newId(),
+        }));
     })
 
     it('should allow to remove a todo', () => {
         const todoId = newId()
+        aTodoAlreadyExists({id: todoId, name: 'my new Todo'});
+
+        const events = es.handle({__type: 'RemoveTodo', id: todoId})
+
+        expect(events).toEqual([{__type: 'TodoRemoved', id: todoId}])
+    })
+
+    it('should forbid to remove an unknown todo', () => {
+        expectUnknownTodoError(() => es.handle({
+            __type: 'RemoveTodo',
+            id: newId()
+        }));
+    })
+
+    function aTodoAlreadyExists(todo: { id: string, name: string } = {id: newId(), name: 'my new Todo'}) {
         alreadyHappen([{
             __type: 'TodoAdded',
-            id: todoId,
-            name: 'my new Todo'
+            ...todo
         }]);
+    }
 
-        const events = es.handle({__type: 'RemoveTodo', id: todoId, name: 'my new Todo'})
-
-        expect(events).toEqual([{__type: 'TodoRemoved', id: todoId, name: 'my new Todo'}])
-    })
 
     function alreadyHappen(events: TodoEvent[]) {
         eventStore.appendEvents('todos', events)
@@ -64,6 +77,10 @@ describe('Event sourced TODO', () => {
 
     function newId(): string {
         return new Date().toISOString();
+    }
+
+    function expectUnknownTodoError(fct: () => {}) {
+        expect(fct).toThrow(new Error('unknown todo'))
     }
 })
 
