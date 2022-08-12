@@ -10,7 +10,7 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 
 ## Next steps
 
-- ▢ Append several events at a time (bulk insert)
+- ✔ Append several events at a time (bulk insert)
 - ▢ Better typings
 - ▢ Review of the event types
 - ▢ show that we need to check the version before we append the events in the event store

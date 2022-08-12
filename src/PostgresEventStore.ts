@@ -1,5 +1,5 @@
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 type InStoreEvent = {
     id: string, stream: string, version: number, body: string
@@ -23,19 +23,21 @@ export class PostgresEventStore<Event> {
             version: ++actualVersion,
             body: JSON.stringify(e)
         }))
-        for (const e of toStore) {
-            await this.appendEvent(e)
-        }
+        await this.insertEvents(toStore)
     }
 
-    private appendEvent: (event: InStoreEvent) => Promise<void> = async (event: InStoreEvent) => {
-        const toStore = [
-            event.id,
-            event.stream,
-            event.version,
-            JSON.stringify(event.body),
-        ];
-        await this.postgreSQLAdapter.query<InStoreEvent>(`INSERT INTO events (id, stream, version, body) VALUES ($1, $2, $3, $4)`, toStore);
+    private insertEvents: (event: InStoreEvent[]) => Promise<void> = async (event: InStoreEvent[]) => {
+        let query = `INSERT INTO events (id, stream, version, body) VALUES ($1, $2, $3, $4)`;
+        const queries = event.map((e: InStoreEvent) => [
+            e.id,
+            e.stream,
+            e.version,
+            JSON.stringify(e.body),
+        ]).map((params: any[]) => ({
+            sql: query,
+            params
+        }));
+        await this.postgreSQLAdapter.multipleQueryInTransaction(queries);
     }
 
     private getLastVersion: (stream: string) => Promise<number> = async (stream: string) => {
