@@ -5,6 +5,7 @@ import {PostgreSQLConfig} from "./postgresql/postgresql.config";
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
 import migration from "node-pg-migrate";
 import {join} from "path";
+import { v4 as uuidv4 } from 'uuid';
 
 
 describe('Event sourced TODO', () => {
@@ -35,6 +36,7 @@ describe('Event sourced TODO', () => {
             migrationsTable: MIGRATION_TABLE,
             direction: 'up',
             count: 999,
+            noLock: true,
         });
 
         eventStore = new PostgresEventStore(postgreSQLAdapter);
@@ -48,62 +50,68 @@ describe('Event sourced TODO', () => {
         await postgreSQLAdapter.close();
     })
 
-    it('should allow to add a todo', () => {
+    it('should allow to add a todo', async () => {
         const todoId = newId()
-        const events = es.handle({__type: 'AddTodo', id: todoId, name: 'my new Todo'})
+        const events = await es.handle({__type: 'AddTodo', id: todoId, name: 'my new Todo'})
         expect(events).toEqual([{__type: 'TodoAdded', id: todoId, name: 'my new Todo'}])
     })
 
-    it('should allow to toggle a todo', () => {
+    it('should allow to toggle a todo', async () => {
         const todoId = newId()
         aTodoAlreadyExists({id: todoId, name: 'my new Todo'});
 
-        const events = es.handle({__type: 'ToggleTodo', id: todoId})
+        const events = await es.handle({__type: 'ToggleTodo', id: todoId})
 
         expect(events).toEqual([{__type: 'TodoToggled', id: todoId}])
     })
 
-    it('should forbid to toggle an unknown todo', () => {
-        expectUnknownTodoError(() => es.handle({
+    it('should forbid to toggle an unknown todo', async () => {
+        await expectUnknownTodoError(async () => await es.handle({
             __type: 'ToggleTodo',
             id: newId(),
         }));
     })
 
-    it('should allow to remove a todo', () => {
+    it('should allow to remove a todo', async () => {
         const todoId = newId()
-        aTodoAlreadyExists({id: todoId, name: 'my new Todo'});
+        await aTodoAlreadyExists({id: todoId, name: 'my new Todo'});
 
-        const events = es.handle({__type: 'RemoveTodo', id: todoId})
+        const events = await es.handle({__type: 'RemoveTodo', id: todoId})
 
         expect(events).toEqual([{__type: 'TodoRemoved', id: todoId}])
     })
 
     it('should forbid to remove an unknown todo', () => {
-        expectUnknownTodoError(() => es.handle({
+        expectUnknownTodoError(async () => await es.handle({
             __type: 'RemoveTodo',
             id: newId()
         }));
     })
 
-    function aTodoAlreadyExists(todo: { id: string, name: string } = {id: newId(), name: 'my new Todo'}) {
-        alreadyHappen([{
+    async function aTodoAlreadyExists(todo: { id: string, name: string } = {id: newId(), name: 'my new Todo'}) {
+        await alreadyHappen([{
             __type: 'TodoAdded',
             ...todo
         }]);
     }
 
 
-    function alreadyHappen(events: TodoEvent[]) {
-        eventStore.appendEvents('todos', events)
+    async function alreadyHappen(events: TodoEvent[]) {
+        await eventStore.appendEvents('todos', events)
     }
 
     function newId(): string {
-        return new Date().toISOString();
+        return uuidv4();
     }
 
-    function expectUnknownTodoError(fct: () => {}) {
-        expect(fct).toThrow(new Error('unknown todo'))
+    async function expectUnknownTodoError<R>(fct: () => Promise<R>) {
+        try {
+            await fct()
+        } catch (e) {
+            expect(e).toEqual(new Error('unknown todo'))
+            return;
+        }
+        fail('no error thrown')
     }
 })
 
