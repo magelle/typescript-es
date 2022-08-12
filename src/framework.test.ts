@@ -1,5 +1,5 @@
 import {WithEventStore} from "./framework";
-import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./todo";
+import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./test/todo";
 import {PostgresEventStore} from "./PostgresEventStore";
 import {PostgreSQLConfig} from "./postgresql/postgresql.config";
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";

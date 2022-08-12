@@ -1,4 +1,4 @@
-import {Stream} from "./framework";
+import {Stream} from "../framework";
 
 export class InMemorySimpleEventStore<Event> {
     private readonly events: Event[] = [];
