@@ -1,28 +1,51 @@
-import {Stream, WithEventStore} from "./framework";
+import {WithEventStore} from "./framework";
 import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./todo";
+import {PostgresEventStore} from "./PostgresEventStore";
+import {PostgreSQLConfig} from "./postgresql/postgresql.config";
+import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
+import migration from "node-pg-migrate";
+import {join} from "path";
 
-class InMemorySimpleEventStore<Event> {
-    private readonly events: Event[] = [];
-
-    readonly loadEvents = (_stream: Stream, _version: number): Event[] => {
-        return this.events
-    }
-
-    readonly appendEvents = (_s: Stream, e: Event[]): void => {
-        this.events.push(...e)
-    }
-}
 
 describe('Event sourced TODO', () => {
-    let eventStore: InMemorySimpleEventStore<TodoEvent>;
+    let postgreSQLAdapter: PostgreSQLAdapter;
+    let eventStore: PostgresEventStore<TodoEvent>;
     let es: WithEventStore<TodoCommand, TodoState, TodoEvent>
 
-    beforeEach(() => {
-        eventStore = new InMemorySimpleEventStore<TodoEvent>()
+    const MIGRATION_DIR = join(__dirname, '../migrations');
+    const MIGRATION_TABLE = 'pgmirations';
+    const POSTGRESQL_DB = 'postgres';
+    const POSTGRESQL_AUTH = 'postgres:integration-pass';
+
+    beforeAll(async () => {
+        // @ts-ignore
+        global.__TESTCONTAINERS_POSTGRE_IP__ = global.__TESTCONTAINERS__[0].host;
+        // @ts-ignore
+        global.__TESTCONTAINERS_POSTGRE_PORT_5432__ = global.__TESTCONTAINERS__[0].getMappedPort(5432);
+        // @ts-ignore
+        const uri = `postgresql://${POSTGRESQL_AUTH}@${global.__TESTCONTAINERS_POSTGRE_IP__}:${global.__TESTCONTAINERS_POSTGRE_PORT_5432__}/${POSTGRESQL_DB}`;
+        const postgreSQLConfig: PostgreSQLConfig = {uri};
+        const postgreSQLAdapter = new PostgreSQLAdapter(postgreSQLConfig);
+
+        await postgreSQLAdapter.connect();
+        await migration({
+            logger: console,
+            databaseUrl: uri,
+            dir: MIGRATION_DIR,
+            migrationsTable: MIGRATION_TABLE,
+            direction: 'up',
+            count: 999,
+        });
+
+        eventStore = new PostgresEventStore(postgreSQLAdapter);
         es = new WithEventStore<TodoCommand, TodoState, TodoEvent>(todoDecider, 'todos', {
             loadEvents: eventStore.loadEvents,
             appendEvents: eventStore.appendEvents
         })
+    })
+
+    afterAll(async () => {
+        await postgreSQLAdapter.close();
     })
 
     it('should allow to add a todo', () => {

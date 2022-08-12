@@ -15,8 +15,8 @@ export type Decider<Command, State, Event> =
 export type Stream = string
 
 export type SimpleEventStore<Event> = {
-    loadEvents: (stream: Stream, version: number) => Event[]
-    appendEvents: (s: Stream, e: Event[]) => void
+    loadEvents: (stream: Stream, version: number) => Promise<Event[]>
+    appendEvents: (s: Stream, e: Event[]) => Promise<void>
 };
 
 export class WithEventStore<Command, State, Event> {
@@ -27,10 +27,10 @@ export class WithEventStore<Command, State, Event> {
     ) {
     }
 
-    public handle(command: Command) {
-        const state = _.reduce(this.eventStore.loadEvents(this.stream, 0), this.decider.evolve, this.decider.initialState)
+    public async handle(command: Command) {
+        const state = _.reduce(await this.eventStore.loadEvents(this.stream, 0), this.decider.evolve, this.decider.initialState)
         const events = this.decider.decide(command, state)
-        this.eventStore.appendEvents(this.stream, events)
+        await this.eventStore.appendEvents(this.stream, events)
         return events
     }
 }
