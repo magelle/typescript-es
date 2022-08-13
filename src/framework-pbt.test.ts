@@ -2,12 +2,10 @@ import {fc} from '@fast-check/jest';
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
 import {PostgresEventStore} from "./PostgresEventStore";
 import {Stream, WithEventStore} from "./framework";
-import {join} from "path";
-import {PostgreSQLConfig} from "./postgresql/postgresql.config";
-import migration from "node-pg-migrate";
 import {CounterCommand, counterDecider, CounterEvent, CounterState} from "./test/counter";
 import * as _ from "lodash";
 import {Arbitrary} from "fast-check";
+import {buildPostgresqlAdapter} from "./test/buildPostgresqlAdapter";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms
@@ -20,37 +18,9 @@ describe('Counter event sourcing', () => {
     let eventStore: PostgresEventStore<CounterEvent>;
     let es: WithEventStore<CounterCommand, CounterState, CounterEvent>
 
-    const MIGRATION_DIR = join(__dirname, '../migrations');
-    const MIGRATION_TABLE = 'pgmirations';
-    const POSTGRESQL_DB = 'postgres';
-    const POSTGRESQL_AUTH = 'postgres:integration-pass';
-
     beforeAll(async () => {
-        // @ts-ignore
-        global.__TESTCONTAINERS_POSTGRE_IP__ = global.__TESTCONTAINERS__[0].host;
-        // @ts-ignore
-        global.__TESTCONTAINERS_POSTGRE_PORT_5432__ = global.__TESTCONTAINERS__[0].getMappedPort(5432);
-        // @ts-ignore
-        const uri = `postgresql://${POSTGRESQL_AUTH}@${global.__TESTCONTAINERS_POSTGRE_IP__}:${global.__TESTCONTAINERS_POSTGRE_PORT_5432__}/${POSTGRESQL_DB}`;
-        const postgreSQLConfig: PostgreSQLConfig = {uri};
-        const postgreSQLAdapter = new PostgreSQLAdapter(postgreSQLConfig);
-
-        await postgreSQLAdapter.connect();
-        await migration({
-            logger: console,
-            databaseUrl: uri,
-            dir: MIGRATION_DIR,
-            migrationsTable: MIGRATION_TABLE,
-            direction: 'up',
-            count: 999,
-            noLock: true,
-        });
-
+        const postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStore(postgreSQLAdapter);
-        es = new WithEventStore<CounterCommand, CounterState, CounterEvent>(counterDecider, 'counter', {
-            loadEvents: eventStore.loadEvents,
-            appendEvents: eventStore.appendEvents
-        })
     })
 
     afterAll(async () => {
@@ -58,6 +28,7 @@ describe('Counter event sourcing', () => {
     })
 
     it('counter value should be under 1000', async () => {
+        // { seed: -742561100, path: "1:1:0", endOnFailure: true }
         await fc.assert(
             fc.asyncProperty(RandomCommands, fc.scheduler(), async (commands, s) => {
 

@@ -1,11 +1,9 @@
 import {WithEventStore} from "./framework";
 import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./test/todo";
 import {PostgresEventStore} from "./PostgresEventStore";
-import {PostgreSQLConfig} from "./postgresql/postgresql.config";
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
-import migration from "node-pg-migrate";
-import {join} from "path";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
+import {buildPostgresqlAdapter} from "./test/buildPostgresqlAdapter";
 
 
 describe('Event sourced TODO', () => {
@@ -13,32 +11,8 @@ describe('Event sourced TODO', () => {
     let eventStore: PostgresEventStore<TodoEvent>;
     let es: WithEventStore<TodoCommand, TodoState, TodoEvent>
 
-    const MIGRATION_DIR = join(__dirname, '../migrations');
-    const MIGRATION_TABLE = 'pgmirations';
-    const POSTGRESQL_DB = 'postgres';
-    const POSTGRESQL_AUTH = 'postgres:integration-pass';
-
     beforeAll(async () => {
-        // @ts-ignore
-        global.__TESTCONTAINERS_POSTGRE_IP__ = global.__TESTCONTAINERS__[0].host;
-        // @ts-ignore
-        global.__TESTCONTAINERS_POSTGRE_PORT_5432__ = global.__TESTCONTAINERS__[0].getMappedPort(5432);
-        // @ts-ignore
-        const uri = `postgresql://${POSTGRESQL_AUTH}@${global.__TESTCONTAINERS_POSTGRE_IP__}:${global.__TESTCONTAINERS_POSTGRE_PORT_5432__}/${POSTGRESQL_DB}`;
-        const postgreSQLConfig: PostgreSQLConfig = {uri};
-        const postgreSQLAdapter = new PostgreSQLAdapter(postgreSQLConfig);
-
-        await postgreSQLAdapter.connect();
-        await migration({
-            logger: console,
-            databaseUrl: uri,
-            dir: MIGRATION_DIR,
-            migrationsTable: MIGRATION_TABLE,
-            direction: 'up',
-            count: 999,
-            noLock: true,
-        });
-
+        const postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStore(postgreSQLAdapter);
         es = new WithEventStore<TodoCommand, TodoState, TodoEvent>(todoDecider, 'todos', {
             loadEvents: eventStore.loadEvents,
