@@ -16,7 +16,7 @@ describe('Event sourced TODO', () => {
         eventStore = new PostgresEventStore(postgreSQLAdapter);
         es = new WithEventStore<TodoCommand, TodoState, TodoEvent>(todoDecider, 'todos', {
             loadEvents: eventStore.loadEvents,
-            appendEvents: eventStore.appendEvents
+            tryAppendEvents: eventStore.tryAppendEvents,
         })
     })
 
@@ -71,7 +71,7 @@ describe('Event sourced TODO', () => {
 
 
     async function alreadyHappen(events: TodoEvent[]) {
-        await eventStore.appendEvents('todos', events)
+        await eventStore.tryAppendEvents('todos', 0, events)
     }
 
     function newId(): string {

@@ -1,7 +1,7 @@
 import {fc} from '@fast-check/jest';
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
 import {PostgresEventStore} from "./PostgresEventStore";
-import {Stream, WithEventStore} from "./framework";
+import {WithEventStore} from "./framework";
 import {CounterCommand, counterDecider, CounterEvent, CounterState} from "./test/counter";
 import * as _ from "lodash";
 import {Arbitrary} from "fast-check";
@@ -32,14 +32,12 @@ describe('Counter event sourcing', () => {
         await fc.assert(
             fc.asyncProperty(RandomCommands, fc.scheduler(), async (commands, s) => {
 
-                const loadEvents: (stream: Stream, version: number) => Promise<CounterEvent[]> =
-                    s.scheduleFunction(eventStore.loadEvents)
-                const appendEvents: (s: Stream, e: CounterEvent[]) => Promise<void> =
-                    s.scheduleFunction(eventStore.appendEvents)
+                const loadEvents = s.scheduleFunction(eventStore.loadEvents)
+                const tryAppendEvents = s.scheduleFunction(eventStore.tryAppendEvents)
 
                 es = new WithEventStore<CounterCommand, CounterState, CounterEvent>(counterDecider, 'counter', {
                     loadEvents,
-                    appendEvents
+                    tryAppendEvents
                 })
 
                 function tryHandle(c: CounterCommand): Promise<CounterEvent[]> {
@@ -54,7 +52,6 @@ describe('Counter event sourcing', () => {
                     .forEach((c: CounterCommand) => tryHandle(c))
 
                 while (s.count() !== 0) {
-                    console.log(s.report())
                     await s.waitOne();
                     const counterState = await getCounterState()
                     if (counterState.value > 1000) throw new Error(`counter value is ${counterState.value}`)
@@ -68,7 +65,8 @@ describe('Counter event sourcing', () => {
     });
 
     async function getCounterState() {
-        return _.reduce(await eventStore.loadEvents('counter', 0), counterDecider.evolve, counterDecider.initialState);
+        const [_version, events] = await eventStore.loadEvents('counter');
+        return _.reduce(events, counterDecider.evolve, counterDecider.initialState);
     }
 });
 

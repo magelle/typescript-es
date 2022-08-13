@@ -7,6 +7,7 @@ export const up = (pgm: any) => {
         version: {type: 'integer', notNull: true},
         body: {type: 'json', notNull: true},
     })
+    pgm.createIndex('events', ['stream', 'version'], {unique: true})
 };
 
 export const down = (pgm: any) => {
