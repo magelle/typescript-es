@@ -28,9 +28,13 @@ export class WithEventStore<Command, State, Event> {
     }
 
     public async handle(command: Command) {
-        const state = _.reduce(await this.eventStore.loadEvents(this.stream, 0), this.decider.evolve, this.decider.initialState)
+        const state = await this.computeState()
         const events = this.decider.decide(command, state)
         await this.eventStore.appendEvents(this.stream, events)
         return events
+    }
+
+    private async computeState() {
+        return _.reduce(await this.eventStore.loadEvents(this.stream, 0), this.decider.evolve, this.decider.initialState);
     }
 }
