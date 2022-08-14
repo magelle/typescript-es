@@ -1,6 +1,6 @@
 import {join} from "path";
-import {PostgreSQLConfig} from "../postgresql/postgresql.config";
-import {PostgreSQLAdapter} from "../postgresql/postgresql.adapter";
+import {PostgreSQLConfig} from "../postgresql/adapter/postgresql.config";
+import {PostgreSQLAdapter} from "../postgresql/adapter/postgresql.adapter";
 import migration from "node-pg-migrate";
 
 const MIGRATION_DIR = join(__dirname, '../../migrations');

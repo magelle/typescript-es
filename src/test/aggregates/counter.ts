@@ -1,4 +1,4 @@
-import {Decide, Decider, Evolve} from "../framework";
+import {Decide, Decider, Evolve} from "../../framework/framework";
 
 type Increment = { __type: 'Increment' }
 type Decrement = { __type: 'Decrement' }

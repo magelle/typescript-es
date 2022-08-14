@@ -1,4 +1,4 @@
-import {Decide, Decider, Evolve} from "../framework";
+import {Decide, Decider, Evolve} from "../../framework/framework";
 
 type Typed<K, T> = K & { __type: T }
 

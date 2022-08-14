@@ -1,12 +1,13 @@
 import {fc} from '@fast-check/jest';
-import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
-import {PostgresEventStore} from "./PostgresEventStore";
-import {EventStore, WithEventStoreInMemory} from "./framework";
-import {CounterCommand, counterDecider, CounterEvent, CounterState} from "./test/counter";
+import {PostgreSQLAdapter} from "../postgresql/adapter/postgresql.adapter";
+import {PostgresEventStoreWithVersion} from "../postgresql/eventstore/PostgresEventStoreWithVersion";
+import {EventStore} from "./framework";
+import {CounterCommand, counterDecider, CounterEvent, CounterState} from "../test/aggregates/counter";
 import * as _ from "lodash";
 import {Arbitrary} from "fast-check";
 import {v4 as uuidv4} from 'uuid';
-import {buildPostgresqlAdapter} from "./test/buildPostgresqlAdapter";
+import {buildPostgresqlAdapter} from "../test/buildPostgresqlAdapter";
+import {WithEventStoreInMemory} from "./withEventStoreInMemory";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms
@@ -16,12 +17,12 @@ if (!fc.readConfigureGlobal()) {
 
 describe('Counter event sourcing', () => {
     let postgreSQLAdapter: PostgreSQLAdapter;
-    let eventStore: PostgresEventStore<CounterEvent>;
+    let eventStore: PostgresEventStoreWithVersion<CounterEvent>;
     let es: EventStore<CounterCommand, CounterEvent>
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
-        eventStore = new PostgresEventStore(postgreSQLAdapter);
+        eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
     })
 
     afterAll(async () => {
