@@ -21,12 +21,12 @@ let counterInitialState: CounterState = {
 
 const onIncrement: Decide<CounterCommand, CounterState, CounterEvent> = (_command: CounterCommand, state: CounterState) => {
     if (state.value === 1000) throw new Error('counter reached max value');
-    if (state.actionsCount === 100000) throw new Error('counter reached max actions');
+    if (state.actionsCount === 1000000) throw new Error('counter reached max actions');
     return [{__type: 'Incremented'}];
 }
 const onDecrement: Decide<CounterCommand, CounterState, CounterEvent> = (_command: CounterCommand, state: CounterState) => {
     if (state.value === 0) throw new Error('counter reached min value');
-    if (state.actionsCount === 100000) throw new Error('counter reached max actions');
+    if (state.actionsCount === 1000000) throw new Error('counter reached max actions');
     return [{__type: 'Decremented'}];
 }
 const decide: Decide<CounterCommand, CounterState, CounterEvent> = (command: CounterCommand, state: CounterState) => {

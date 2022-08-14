@@ -1,10 +1,11 @@
 import {fc} from '@fast-check/jest';
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
 import {PostgresEventStore} from "./PostgresEventStore";
-import {WithEventStore} from "./framework";
+import {EventStore, WithEventStoreInMemory} from "./framework";
 import {CounterCommand, counterDecider, CounterEvent, CounterState} from "./test/counter";
 import * as _ from "lodash";
 import {Arbitrary} from "fast-check";
+import {v4 as uuidv4} from 'uuid';
 import {buildPostgresqlAdapter} from "./test/buildPostgresqlAdapter";
 
 if (!fc.readConfigureGlobal()) {
@@ -16,7 +17,7 @@ if (!fc.readConfigureGlobal()) {
 describe('Counter event sourcing', () => {
     let postgreSQLAdapter: PostgreSQLAdapter;
     let eventStore: PostgresEventStore<CounterEvent>;
-    let es: WithEventStore<CounterCommand, CounterState, CounterEvent>
+    let es: EventStore<CounterCommand, CounterEvent>
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
@@ -31,11 +32,12 @@ describe('Counter event sourcing', () => {
         // { seed: -742561100, path: "1:1:0", endOnFailure: true }
         await fc.assert(
             fc.asyncProperty(RandomCommands, fc.scheduler(), async (commands, s) => {
+                const stream = uuidv4().toString()
 
                 const loadEvents = s.scheduleFunction(eventStore.loadEvents)
                 const tryAppendEvents = s.scheduleFunction(eventStore.tryAppendEvents)
 
-                es = new WithEventStore<CounterCommand, CounterState, CounterEvent>(counterDecider, 'counter', {
+                es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
                     loadEvents,
                     tryAppendEvents
                 })
@@ -53,7 +55,7 @@ describe('Counter event sourcing', () => {
 
                 while (s.count() !== 0) {
                     await s.waitOne();
-                    const counterState = await getCounterState()
+                    const counterState = await getCounterState(stream)
                     if (counterState.value > 1000) throw new Error(`counter value is ${counterState.value}`)
                     if (counterState.value < 0) throw new Error(`counter value is ${counterState.value}`)
                 }
@@ -64,11 +66,39 @@ describe('Counter event sourcing', () => {
         )
     });
 
-    async function getCounterState() {
-        const [_version, events] = await eventStore.loadEvents('counter');
+    it('should handle lots of commands aggregate quickly (with 1 000 000 events)', async () => {
+        const stream = uuidv4().toString()
+        es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
+            loadEvents: eventStore.loadEvents,
+            tryAppendEvents: eventStore.tryAppendEvents,
+        })
+
+        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
+        // we should go up to 1 000 000 events in less than 300 ms
+
+        console.log('Start Adding events')
+        await expectExecutionTime(300, async () => {
+            for (const action of actions) {
+                await es.handle(action)
+            }
+        })
+        console.log('End Adding events')
+    });
+
+    async function getCounterState(stream: string) {
+        const [_version, events] = await eventStore.loadEvents(stream);
         return _.reduce(events, counterDecider.evolve, counterDecider.initialState);
     }
 });
+
+async function expectExecutionTime(maxTime: number, fct: () => Promise<any>): Promise<void> {
+    const start = Date.now();
+    await fct()
+    const end = Date.now();
+    expect(end - start).toBeLessThan(maxTime);
+}
 
 const RandomCommands: Arbitrary<CounterCommand[]> = fc.array(fc.oneof(
     fc.constant({__type: 'Increment'} as CounterCommand),

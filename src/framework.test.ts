@@ -1,4 +1,4 @@
-import {WithEventStore} from "./framework";
+import {EventStore, WithEventStoreInMemory} from "./framework";
 import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./test/todo";
 import {PostgresEventStore} from "./PostgresEventStore";
 import {PostgreSQLAdapter} from "./postgresql/postgresql.adapter";
@@ -7,14 +7,19 @@ import {buildPostgresqlAdapter} from "./test/buildPostgresqlAdapter";
 
 
 describe('Event sourced TODO', () => {
-    let postgreSQLAdapter: PostgreSQLAdapter;
-    let eventStore: PostgresEventStore<TodoEvent>;
-    let es: WithEventStore<TodoCommand, TodoState, TodoEvent>
+    let stream: string
+    let postgreSQLAdapter: PostgreSQLAdapter
+    let eventStore: PostgresEventStore<TodoEvent>
+    let es: EventStore<TodoCommand, TodoEvent>
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStore(postgreSQLAdapter);
-        es = new WithEventStore<TodoCommand, TodoState, TodoEvent>(todoDecider, 'todos', {
+    })
+
+    beforeEach(async () => {
+        stream = uuidv4().toString()
+        es = new WithEventStoreInMemory<TodoCommand, TodoState, TodoEvent>(todoDecider, stream, {
             loadEvents: eventStore.loadEvents,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
@@ -62,6 +67,14 @@ describe('Event sourced TODO', () => {
         }));
     })
 
+    it('should handle several commands', async () => {
+        const todoId = newId()
+
+        await es.handle({__type: 'AddTodo', id: todoId, name: 'my new Todo'})
+        await es.handle({__type: 'ToggleTodo', id: todoId})
+        await es.handle({__type: 'RemoveTodo', id: todoId})
+    })
+
     async function aTodoAlreadyExists(todo: { id: string, name: string } = {id: newId(), name: 'my new Todo'}) {
         await alreadyHappen([{
             __type: 'TodoAdded',
@@ -71,7 +84,7 @@ describe('Event sourced TODO', () => {
 
 
     async function alreadyHappen(events: TodoEvent[]) {
-        await eventStore.tryAppendEvents('todos', 0, events)
+        await eventStore.tryAppendEvents(stream, 0, events)
     }
 
     function newId(): string {
