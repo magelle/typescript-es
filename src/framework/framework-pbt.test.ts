@@ -109,7 +109,7 @@ describe('Counter event sourcing', () => {
         // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')
-        await expectExecutionTime(4000, async () => {
+        await expectExecutionTime(5000, async () => {
             for (const action of actions) {
                 await es.handle(action)
             }

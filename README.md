@@ -18,6 +18,7 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ▢ show that we need snapshots
   - ☑️ With big event stream (generated?, tools?)
 - ☑️ handle snapshot invalidation (through versioning by apply function hash ?)
+- ▢ Find faster serialization protocol (faster than JSON)
 - ▢ Handle upcasters (without deserialization)
 - ▢ handle projections
 
