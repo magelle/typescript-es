@@ -1,4 +1,4 @@
-import {Stream} from "./framework";
+import {Stream} from "../framework";
 
 export type SimpleEventStore<Event> = {
     loadEvents: (stream: Stream, version: number) => Promise<Event[]>

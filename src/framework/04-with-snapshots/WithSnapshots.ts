@@ -1,27 +1,18 @@
 import {Either, match} from "fp-ts/Either";
 import {pipe} from "fp-ts/function";
 import * as _ from "lodash";
-import {Decider, EventStore, Stream} from "./framework";
-import {EventStoreWithVersion} from "./eventStoreWithVersion";
-import {SnapshotsWithContainer} from "./snapshotsWithContainer";
-import {hash} from "fast-check";
+import {Decider, EventStore, Stream} from "../framework";
+import {EventStoreWithVersion} from "../eventStoreWithVersion";
+import {Snapshots} from "./snapshots";
 
-export class WithSnapshotsInContainers<Command, State, Event> implements EventStore<Command, Event> {
-
-    private readonly container: string;
+export class WithSnapshots<Command, State, Event> implements EventStore<Command, Event> {
 
     constructor(
         private readonly decider: Decider<Command, State, Event>,
         private readonly stream: Stream,
         private readonly eventStore: EventStoreWithVersion<Event>,
-        private readonly snapshots: SnapshotsWithContainer<State>,
+        private readonly snapshots: Snapshots<State>,
     ) {
-        this.container = this.getContainerFromDecideHash(decider)
-    }
-
-    private getContainerFromDecideHash(decider: Decider<Command, State, Event>): string {
-        // Make this better to avoid having a new container when the decider is refactored
-        return hash(decider.evolve.toString()).toString();
     }
 
     public async handle(command: Command): Promise<Event[]> {
@@ -40,7 +31,7 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
             (version: number) => {
                 if(this.isTimeToSnapshot(version)) {
                     const newState = _.reduce(events, this.decider.evolve, state!)
-                    this.snapshots.saveSnapshot(this.stream, this.container, version, newState)
+                    this.snapshots.saveSnapshot(this.stream, version, newState)
                 }
                 return Promise.resolve(events)
             },
@@ -48,7 +39,7 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
     }
 
     private async loadState(): Promise<[number, State]> {
-        let [snapVersion, snapState] = await this.snapshots.tryLoadSnapshot(this.stream, this.container);
+        let [snapVersion, snapState] = await this.snapshots.tryLoadSnapshot(this.stream);
         if (!snapState) {
             snapVersion = 0
             snapState = this.decider.initialState

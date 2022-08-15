@@ -1,8 +1,8 @@
 import {Either, match} from "fp-ts/Either";
 import {pipe} from "fp-ts/function";
 import * as _ from "lodash";
-import {Decider, EventStore, Stream} from "./framework";
-import {EventStoreWithVersion} from "./eventStoreWithVersion";
+import {Decider, EventStore, Stream} from "../framework";
+import {EventStoreWithVersion} from "../eventStoreWithVersion";
 
 export class WithEventStoreInMemory<Command, State, Event> implements EventStore<Command, Event> {
     private version: number | undefined = undefined

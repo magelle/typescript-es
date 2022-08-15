@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {Decider, EventStore, Stream} from "./framework";
+import {Decider, EventStore, Stream} from "../framework";
 import {SimpleEventStore} from "./simpleEventStore";
 
 export class WithEventStore<Command, State, Event> implements EventStore<Command, Event> {

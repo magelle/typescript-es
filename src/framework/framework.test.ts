@@ -1,10 +1,10 @@
 import {EventStore} from "./framework";
-import {TodoCommand, todoDecider, TodoEvent, TodoState} from "../test/aggregates/todo";
-import {PostgresEventStoreWithVersion} from "../postgresql/eventstore/PostgresEventStoreWithVersion";
-import {PostgreSQLAdapter} from "../postgresql/adapter/postgresql.adapter";
+import {TodoCommand, todoDecider, TodoEvent, TodoState} from "../test/aggregates-examples/todo";
+import {PostgresEventStoreWithVersion} from "./postgresql/eventstore/PostgresEventStoreWithVersion";
+import {PostgreSQLAdapter} from "./postgresql/adapter/postgresql.adapter";
 import {v4 as uuidv4} from 'uuid';
 import {buildPostgresqlAdapter} from "../test/buildPostgresqlAdapter";
-import {WithEventStoreInMemory} from "./withEventStoreInMemory";
+import {WithEventStoreInMemory} from "./03-with-event-store-in-memory/withEventStoreInMemory";
 
 
 describe('Event sourced TODO', () => {

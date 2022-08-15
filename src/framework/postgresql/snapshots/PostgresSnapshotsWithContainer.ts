@@ -1,7 +1,7 @@
 import {PostgreSQLAdapter} from "../adapter/postgresql.adapter";
 import _ from "lodash";
 import {QueryResult} from "pg";
-import {SnapshotsWithContainer} from "../../framework/snapshotsWithContainer";
+import {SnapshotsWithContainer} from "../../05-with-snapshots-in-containers/snapshotsWithContainer";
 
 export class PostgresSnapshotsWithContainer<State> implements SnapshotsWithContainer<State> {
     constructor(private readonly postgreSQLAdapter: PostgreSQLAdapter) {

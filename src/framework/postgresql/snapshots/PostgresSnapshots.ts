@@ -1,4 +1,4 @@
-import {Snapshots} from "../../framework/snapshots";
+import {Snapshots} from "../../04-with-snapshots/snapshots";
 import {PostgreSQLAdapter} from "../adapter/postgresql.adapter";
 import _ from "lodash";
 import {QueryResult} from "pg";

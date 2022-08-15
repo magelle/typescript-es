@@ -1,6 +1,6 @@
 import {PostgreSQLAdapter} from "../adapter/postgresql.adapter";
 import {v4 as uuidv4} from "uuid";
-import {SimpleEventStore} from "../../framework/simpleEventStore";
+import {SimpleEventStore} from "../../01-with-event-store/simpleEventStore";
 
 type InStoreEvent = {
     id: string, stream: string, version: number, body: string

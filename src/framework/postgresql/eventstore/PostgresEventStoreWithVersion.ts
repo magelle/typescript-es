@@ -1,10 +1,10 @@
 import {PostgreSQLAdapter} from "../adapter/postgresql.adapter";
 import {v4 as uuidv4} from 'uuid';
-import {Stream} from "../../framework/framework";
+import {Stream} from "../../framework";
 import _ from "lodash";
 import {QueryResult} from "pg";
 import {Either, left, right} from "fp-ts/Either";
-import {EventStoreWithVersion} from "../../framework/eventStoreWithVersion";
+import {EventStoreWithVersion} from "../../eventStoreWithVersion";
 
 type InStoreEvent = {
     id: string, stream: string, version: number, body: string

@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 import {Either, match} from "fp-ts/Either";
 import {pipe} from "fp-ts/function";
-import {Decider, EventStore, Stream} from "./framework";
-import {EventStoreWithVersion} from "./eventStoreWithVersion";
+import {Decider, EventStore, Stream} from "../framework";
+import {EventStoreWithVersion} from "../eventStoreWithVersion";
 
 export class WithEventStoreAndVersion<Command, State, Event> implements EventStore<Command, Event> {
     constructor(
