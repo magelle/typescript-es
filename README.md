@@ -21,6 +21,5 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ▢ Find faster serialization protocol (faster than JSON)
 - ▢ Handle upcasters (without deserialization)
 - ▢ handle projections
-
-- ▢ How to handle informations computed from the current time ?
-- 
+- ▢ Try to compose the list of todos with several deciders
+- ▢ How to handle information computed from the current time ?
