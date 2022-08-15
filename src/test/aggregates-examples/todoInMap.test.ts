@@ -1,4 +1,4 @@
-import {Decider, EventStore} from "../../framework/framework";
+import {EventStore} from "../../framework/framework";
 import {TodoCommand, todoDecider, TodoEvent, TodoState} from "./todo";
 import {PostgresEventStoreWithVersion} from "../../framework/postgresql/eventstore/PostgresEventStoreWithVersion";
 import {PostgreSQLAdapter} from "../../framework/postgresql/adapter/postgresql.adapter";
@@ -21,8 +21,8 @@ describe('Event sourced TODO', () => {
 
     beforeEach(async () => {
         stream = uuidv4().toString()
-        const todosInMap: Decider<[string, TodoCommand], Map<string, TodoState>, [string, TodoEvent]> = toMap<string, TodoCommand, TodoState, TodoEvent>(todoDecider)
-        es = new WithEventStoreInMemory<[string, TodoCommand], Map<string, TodoState>, [string, TodoEvent]>(todosInMap, stream, {
+        const todosInMap = toMap<string, TodoCommand, TodoState, TodoEvent>(todoDecider)
+        es = new WithEventStoreInMemory(todosInMap, stream, {
             loadEvents: eventStore.loadEvents,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
