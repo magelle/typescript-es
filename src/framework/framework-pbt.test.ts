@@ -12,6 +12,9 @@ import {WithEventStoreAndVersion} from "./withEventStoreAndVersion";
 import {WithSnapshots} from "./WithSnapshots";
 import {PostgresSnapshots} from "../postgresql/snapshots/PostgresSnapshots";
 import {Snapshots} from "./snapshots";
+import {WithSnapshotsInContainers} from "./WithSnapshotsInContainers";
+import {SnapshotsWithContainer} from "./snapshotsWithContainer";
+import {PostgresSnapshotsWithContainer} from "../postgresql/snapshots/PostgresSnapshotsWithContainer";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms
@@ -23,12 +26,14 @@ describe('Counter event sourcing', () => {
     let postgreSQLAdapter: PostgreSQLAdapter;
     let eventStore: PostgresEventStoreWithVersion<CounterEvent>;
     let snapshots: Snapshots<CounterState>;
+    let snapshotsWithContainer: SnapshotsWithContainer<CounterState>;
     let es: EventStore<CounterCommand, CounterEvent>
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
         snapshots = new PostgresSnapshots(postgreSQLAdapter);
+        snapshotsWithContainer = new PostgresSnapshotsWithContainer(postgreSQLAdapter);
     })
 
     afterAll(async () => {
@@ -112,7 +117,7 @@ describe('Counter event sourcing', () => {
         console.log('End Adding events')
     });
 
-    it('should be faster with snapshots (it\'s not)', async () => {
+    it('should be faster with snapshots (it\'s not :( )', async () => {
         const stream = uuidv4().toString()
 
         const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
@@ -124,6 +129,24 @@ describe('Counter event sourcing', () => {
         await expectExecutionTime(20000, async () => {
             for (const action of actions) {
                 es = new WithSnapshots<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, eventStore, snapshots)
+                await es.handle(action)
+            }
+        })
+        console.log('End Adding events')
+    });
+
+    it('should be faster with snapshots in containers (it\'s not :( )', async () => {
+        const stream = uuidv4().toString()
+
+        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
+        // we should go up to 1 000 000 events in less than 300 ms
+
+        console.log('Start Adding events')
+        await expectExecutionTime(20000, async () => {
+            for (const action of actions) {
+                es = new WithSnapshotsInContainers<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, eventStore, snapshotsWithContainer)
                 await es.handle(action)
             }
         })

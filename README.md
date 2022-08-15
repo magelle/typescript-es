@@ -16,8 +16,8 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ☑️ show that we need to check the version before we append the events in the event store
   - ☑️ With property based testing
 - ▢ show that we need snapshots
-  - ▢ With big event stream (generated?, tools?)
-- ▢ handle snapshot invalidation (through versioning by apply function hash ?)
+  - ☑️ With big event stream (generated?, tools?)
+- ☑️ handle snapshot invalidation (through versioning by apply function hash ?)
 - ▢ Handle upcasters (without deserialization)
 - ▢ handle projections
 

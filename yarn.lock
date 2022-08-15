@@ -1401,6 +1401,11 @@ has@^1.0.3:
   dependencies:
     function-bind "^1.1.1"
 
+hash@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/hash/-/hash-0.2.1.tgz#a719d789397c5637f02043c0c180f431fdf9a6ec"
+  integrity sha512-yUBu1BNORmIBcz6XsuSIs0mUCnYTb3rsgEWE87d7giQYUCxqtxiVRkokV9mXH3xBKVfPqML+21ruSOQinnTqtg==
+
 homedir-polyfill@^1.0.0:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/homedir-polyfill/-/homedir-polyfill-1.0.3.tgz#743298cef4e5af3e194161fbadcc2151d3a058e8"
