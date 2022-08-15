@@ -8,6 +8,10 @@ import {Arbitrary} from "fast-check";
 import {v4 as uuidv4} from 'uuid';
 import {buildPostgresqlAdapter} from "../test/buildPostgresqlAdapter";
 import {WithEventStoreInMemory} from "./withEventStoreInMemory";
+import {WithEventStoreAndVersion} from "./withEventStoreAndVersion";
+import {WithSnapshots} from "./WithSnapshots";
+import {PostgresSnapshots} from "../postgresql/snapshots/PostgresSnapshots";
+import {Snapshots} from "./snapshots";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms
@@ -18,11 +22,13 @@ if (!fc.readConfigureGlobal()) {
 describe('Counter event sourcing', () => {
     let postgreSQLAdapter: PostgreSQLAdapter;
     let eventStore: PostgresEventStoreWithVersion<CounterEvent>;
+    let snapshots: Snapshots<CounterState>;
     let es: EventStore<CounterCommand, CounterEvent>
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
+        snapshots = new PostgresSnapshots(postgreSQLAdapter);
     })
 
     afterAll(async () => {
@@ -67,9 +73,9 @@ describe('Counter event sourcing', () => {
         )
     });
 
-    it('should handle lots of commands aggregate quickly (with 1 000 000 events)', async () => {
+    it('should handle lots of commands per aggregate (with 1 000 000 events)', async () => {
         const stream = uuidv4().toString()
-        es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
+        es = new WithEventStoreAndVersion<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
             loadEvents: eventStore.loadEvents,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
@@ -80,8 +86,44 @@ describe('Counter event sourcing', () => {
         // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')
-        await expectExecutionTime(300, async () => {
+        await expectExecutionTime(14000, async () => {
             for (const action of actions) {
+                await es.handle(action)
+            }
+        })
+        console.log('End Adding events')
+    });
+
+    it('should should be faster with in memory state', async () => {
+        const stream = uuidv4().toString()
+        es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, eventStore)
+
+        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
+        // we should go up to 1 000 000 events in less than 300 ms
+
+        console.log('Start Adding events')
+        await expectExecutionTime(4000, async () => {
+            for (const action of actions) {
+                await es.handle(action)
+            }
+        })
+        console.log('End Adding events')
+    });
+
+    it('should be faster with snapshots (it\'s not)', async () => {
+        const stream = uuidv4().toString()
+
+        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
+        // we should go up to 1 000 000 events in less than 300 ms
+
+        console.log('Start Adding events')
+        await expectExecutionTime(20000, async () => {
+            for (const action of actions) {
+                es = new WithSnapshots<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, eventStore, snapshots)
                 await es.handle(action)
             }
         })

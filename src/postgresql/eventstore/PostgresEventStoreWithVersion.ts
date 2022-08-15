@@ -14,9 +14,10 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
     constructor(private readonly postgreSQLAdapter: PostgreSQLAdapter) {
     }
 
-    public loadEvents: (stream: string) => Promise<[number, Event[]]> = async (stream: string) => {
-        return await this.loadEventsAfterVersion(stream, 0)
-    }
+    public loadEvents: (stream: string, version?: number) => Promise<[number, Event[]]> =
+        async (stream: string, version?: number) => {
+            return await this.loadEventsAfterVersion(stream, version ?? 0)
+        }
 
     public tryAppendEvents: (s: Stream, v: number, e: Event[]) => Promise<Either<[number, Event[]], number>> = async (stream: string, version: number, events: Event[]) => {
         const toStore: InStoreEvent[] = events.map((e: Event) => ({
@@ -50,11 +51,12 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
         await this.postgreSQLAdapter.multipleQueryInTransaction(queries);
     }
 
-    private loadEventsAfterVersion: (stream: string, version: number) => Promise<[number, Event[]]> = async (stream: string, afterVersion: number) => {
-        const result: QueryResult<InStoreEvent> = await this.postgreSQLAdapter.query<InStoreEvent>(`SELECT * FROM events WHERE stream = $1 AND version >= $2`, [stream, afterVersion])
-        const events: Event[] = result.rows
-            .map((row: InStoreEvent) => JSON.parse(row.body));
-        const version: number = _.maxBy(result.rows, e => e.version)?.version ?? 0;
-        return [version, events];
-    }
+    private loadEventsAfterVersion: (stream: string, version: number) => Promise<[number, Event[]]> =
+        async (stream: string, afterVersion: number) => {
+            const result: QueryResult<InStoreEvent> = await this.postgreSQLAdapter.query<InStoreEvent>(`SELECT * FROM events WHERE stream = $1 AND version > $2`, [stream, afterVersion])
+            const events: Event[] = result.rows
+                .map((row: InStoreEvent) => JSON.parse(row.body));
+            const lastVersion: number = _.maxBy(result.rows, e => e.version)?.version ?? afterVersion;
+            return [lastVersion, events];
+        }
 }
