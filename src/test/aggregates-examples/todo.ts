@@ -1,56 +1,60 @@
 import {Decide, Decider, Evolve} from "../../framework/framework";
+import {match, Pattern} from "ts-pattern";
 
 type Typed<K, T> = K & { __type: T }
 
-export type AddTodo = Typed<{ id: string, name: string }, 'AddTodo'>
-export type ToggleTodo = Typed<{ id: string }, 'ToggleTodo'>
-export type RemoveTodo = Typed<{ id: string }, 'RemoveTodo'>
+export type AddTodo = Typed<{ name: string }, 'AddTodo'>
+export type ToggleTodo = Typed<{}, 'ToggleTodo'>
+export type RemoveTodo = Typed<{}, 'RemoveTodo'>
 export type TodoCommand = AddTodo | ToggleTodo | RemoveTodo
 
-export type Todo = { id: string, name: string, done: boolean }
-export type TodoState = { todos: Todo[] }
+export type TodoState = { name: string, done: boolean, removed: boolean }
 
-export type TodoAdded = Typed<{ id: string, name: string }, 'TodoAdded'>
-export type TodoToggled = Typed<{ id: string }, 'TodoToggled'>
-export type TodoRemoved = Typed<{ id: string }, 'TodoRemoved'>
+export type TodoAdded = Typed<{ name: string }, 'TodoAdded'>
+export type TodoToggled = Typed<{}, 'TodoToggled'>
+export type TodoRemoved = Typed<{}, 'TodoRemoved'>
 export type TodoEvent = TodoAdded | TodoToggled | TodoRemoved
 
 const todoInitialState: TodoState = {
-    todos: []
+    name: "",
+    done: false,
+    removed: false
 };
 
-const assertTodoExists = (state: TodoState, id: string) => {
-    if (state.todos.every(todo => todo.id !== id)) throw new Error('unknown todo');
-}
+const decide: Decide<TodoCommand, TodoState, TodoEvent> = (command: TodoCommand, state: TodoState) =>
+    match<[TodoCommand, TodoState], TodoEvent[]>([command, state])
+        .with([{__type: 'AddTodo'}, Pattern.any],
+            ([command, _state]: [AddTodo, TodoState]) =>
+                [{name: command.name, __type: 'TodoAdded'}])
+        .with([{__type: 'ToggleTodo'}, Pattern.any],
+            ([_command, _state]: [ToggleTodo, TodoState]) => {
+                return [{__type: 'TodoToggled'}]
+            })
+        .with([{__type: 'RemoveTodo'}, Pattern.any],
+            ([_command, _state]: [RemoveTodo, TodoState]) => {
+                return [{__type: 'TodoRemoved'}]
+            })
+        .otherwise(([_command, _state]) => [])
 
-const decide: Decide<TodoCommand, TodoState, TodoEvent> = (command: TodoCommand, state: TodoState) => {
-    switch (command.__type) {
-        case "AddTodo":
-            return [{id: command.id, name: command.name, __type: 'TodoAdded'}]
-        case "ToggleTodo":
-            assertTodoExists(state, command.id);
-            return [{id: command.id, __type: 'TodoToggled'}]
-        case "RemoveTodo":
-            assertTodoExists(state, command.id);
-            return [{id: command.id, __type: 'TodoRemoved'}]
-    }
-    return []
-}
-
-const evolve: Evolve<TodoState, TodoEvent> = (state: TodoState, event: TodoEvent) => {
-    switch (event.__type) {
-        case "TodoAdded":
-            return {...state, todos: [...state.todos, {id: event.id, name: event.name, done: false}]}
-        case "TodoToggled":
-            return {...state, todos: state.todos.map((t: Todo) => t.id === event.id ? {...t, done: true} : t)}
-        case "TodoRemoved":
-            return {...state, todos: state.todos.filter(t => t.id !== event.id)}
-    }
-}
+const evolve: Evolve<TodoState, TodoEvent> = (state: TodoState, event: TodoEvent) =>
+    match<[TodoState, TodoEvent], TodoState>([state, event])
+        .with([Pattern.any, {__type: 'TodoAdded'}],
+            ([_state, event]) =>
+                ({name: event.name, done: false, removed: false})
+        )
+        .with([Pattern.any, {__type: 'TodoToggled'}],
+            ([state, _event]) =>
+                ({...state, done: true})
+        )
+        .with([Pattern.any, {__type: 'TodoRemoved'}],
+            ([state, _event]) =>
+                ({...state, removed: true})
+        )
+        .otherwise(([state, _event]) => state)
 
 export const todoDecider: Decider<TodoCommand, TodoState, TodoEvent> = {
     decide,
     evolve,
     initialState: todoInitialState,
-    isTerminal: () => false
+    isTerminal: (s: TodoState) => s.removed
 }

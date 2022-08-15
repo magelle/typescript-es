@@ -16,4 +16,3 @@ export interface EventStore<Command, Event> {
     handle(command: Command): Promise<Event[]>
 }
 
-

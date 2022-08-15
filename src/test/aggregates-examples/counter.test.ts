@@ -1,20 +1,20 @@
 import {fc} from '@fast-check/jest';
-import {PostgreSQLAdapter} from "./postgresql/adapter/postgresql.adapter";
-import {PostgresEventStoreWithVersion} from "./postgresql/eventstore/PostgresEventStoreWithVersion";
-import {EventStore} from "./framework";
-import {CounterCommand, counterDecider, CounterEvent, CounterState} from "../test/aggregates-examples/counter";
+import {PostgreSQLAdapter} from "../../framework/postgresql/adapter/postgresql.adapter";
+import {PostgresEventStoreWithVersion} from "../../framework/postgresql/eventstore/PostgresEventStoreWithVersion";
+import {EventStore} from "../../framework/framework";
+import {CounterCommand, counterDecider, CounterEvent, CounterState} from "./counter";
 import * as _ from "lodash";
 import {Arbitrary} from "fast-check";
 import {v4 as uuidv4} from 'uuid';
-import {buildPostgresqlAdapter} from "../test/buildPostgresqlAdapter";
-import {WithEventStoreInMemory} from "./03-with-event-store-in-memory/withEventStoreInMemory";
-import {WithEventStoreAndVersion} from "./02-with-event-store-and-version/withEventStoreAndVersion";
-import {WithSnapshots} from "./04-with-snapshots/WithSnapshots";
-import {PostgresSnapshots} from "./postgresql/snapshots/PostgresSnapshots";
-import {Snapshots} from "./04-with-snapshots/snapshots";
-import {WithSnapshotsInContainers} from "./05-with-snapshots-in-containers/WithSnapshotsInContainers";
-import {SnapshotsWithContainer} from "./05-with-snapshots-in-containers/snapshotsWithContainer";
-import {PostgresSnapshotsWithContainer} from "./postgresql/snapshots/PostgresSnapshotsWithContainer";
+import {buildPostgresqlAdapter} from "../buildPostgresqlAdapter";
+import {WithEventStoreInMemory} from "../../framework/03-with-event-store-in-memory/withEventStoreInMemory";
+import {WithEventStoreAndVersion} from "../../framework/02-with-event-store-and-version/withEventStoreAndVersion";
+import {WithSnapshots} from "../../framework/04-with-snapshots/WithSnapshots";
+import {PostgresSnapshots} from "../../framework/postgresql/snapshots/PostgresSnapshots";
+import {Snapshots} from "../../framework/04-with-snapshots/snapshots";
+import {WithSnapshotsInContainers} from "../../framework/05-with-snapshots-in-containers/WithSnapshotsInContainers";
+import {SnapshotsWithContainer} from "../../framework/05-with-snapshots-in-containers/snapshotsWithContainer";
+import {PostgresSnapshotsWithContainer} from "../../framework/postgresql/snapshots/PostgresSnapshotsWithContainer";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms

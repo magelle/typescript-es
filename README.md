@@ -1,6 +1,8 @@
 # Event souring project in ES
 
 ## Tools
+- [fp-ts](https://gcanti.github.io/fp-ts/)
+- [ts-pattern](https://github.com/gvergnaud/ts-pattern)
 - [Jest](https://jestjs.io/)
 - [Jest Testcontainers](https://github.com/Trendyol/jest-testcontainers/)
 - [node-postgres](https://node-postgres.com/)
