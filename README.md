@@ -22,6 +22,7 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ☑️ handle snapshot invalidation (through versioning by apply function hash ?)
 - ▢ Find faster serialization protocol (faster than JSON)
 - ▢ Handle upcasters (without deserialization)
-- ▢ handle projections
+- ▢ handle Views (Instant and stored) and make an exemple
+- ▢ handle (Processes) and make an exemple
 - ☑️ Try to compose the list of todos with several deciders
 - ▢ How to handle information computed from the current time ?
