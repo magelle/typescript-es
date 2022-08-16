@@ -7,6 +7,7 @@ export type A<T> = Typed<{ value: T }, 'A'>
 export type B<T> = Typed<{ value: T }, 'B'>
 type Or<Ta, Tb> = A<Ta> | B<Tb>
 
+// This is a "Or" decider Commands, States, Events are specific to 1 type
 // @ts-ignore
 function plus<Ca, Cb, Sa, Sb, Ea, Eb>(
     da: Decider<Ca, Sa, Ea>,
