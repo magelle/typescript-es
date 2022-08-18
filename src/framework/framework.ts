@@ -16,6 +16,11 @@ export interface EventStore<Command, Event> {
     handle(command: Command): Promise<Event[]>
 }
 
+export interface Serializer {
+    serialize<T>(value: T): string
+    deserialize<T>(value: string): T
+}
+
 export type InstantView<State, Event> =
     {
         evolve: Evolve<State, Event>

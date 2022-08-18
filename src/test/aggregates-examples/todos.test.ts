@@ -5,6 +5,7 @@ import {PostgreSQLAdapter} from "../../framework/postgresql/adapter/postgresql.a
 import {v4 as uuidv4} from 'uuid';
 import {buildPostgresqlAdapter} from "../buildPostgresqlAdapter";
 import {WithEventStoreInMemory} from "../../framework/03-with-event-store-in-memory/withEventStoreInMemory";
+import {JSONSerializer} from "../../framework/postgresql/serializer/JSONSerializer";
 
 
 describe('Event sourced TODO', () => {
@@ -15,7 +16,10 @@ describe('Event sourced TODO', () => {
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
-        eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
+        eventStore = new PostgresEventStoreWithVersion(
+            postgreSQLAdapter,
+            new JSONSerializer()
+        );
     })
 
     beforeEach(async () => {

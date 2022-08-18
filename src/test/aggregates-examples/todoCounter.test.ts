@@ -9,6 +9,7 @@ import {WithEventStoreInMemory} from "../../framework/03-with-event-store-in-mem
 import {todoCounterDecider, TodoCounterState} from "./todoCounter";
 import {product} from "../../framework/product";
 import _ from "lodash";
+import {JSONSerializer} from "../../framework/postgresql/serializer/JSONSerializer";
 
 describe('Todo counter', () => {
 
@@ -19,7 +20,10 @@ describe('Todo counter', () => {
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
-        eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
+        eventStore = new PostgresEventStoreWithVersion(
+            postgreSQLAdapter,
+            new JSONSerializer()
+        );
     })
 
     beforeEach(async () => {

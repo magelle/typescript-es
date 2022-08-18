@@ -1,6 +1,6 @@
 import {PostgreSQLAdapter} from "../adapter/postgresql.adapter";
 import {v4 as uuidv4} from 'uuid';
-import {Stream} from "../../framework";
+import {Serializer, Stream} from "../../framework";
 import _ from "lodash";
 import {QueryResult} from "pg";
 import {Either, left, right} from "fp-ts/Either";
@@ -11,7 +11,10 @@ type InStoreEvent = {
 }
 
 export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersion<Event> {
-    constructor(private readonly postgreSQLAdapter: PostgreSQLAdapter) {
+    constructor(
+        private readonly postgreSQLAdapter: PostgreSQLAdapter,
+        private readonly serializer: Serializer,
+    ) {
     }
 
     public loadEvents: (stream: string, version?: number) => Promise<[number, Event[]]> =
@@ -24,7 +27,7 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
             id: uuidv4(),
             stream: stream,
             version: ++version,
-            body: JSON.stringify(e)
+            body: this.serializer.serialize(e)
         }))
         try {
             await this.insertEvents(toStore)
@@ -43,7 +46,7 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
             e.id,
             e.stream,
             e.version,
-            JSON.stringify(e.body),
+            e.body,
         ]).map((params: any[]) => ({
             sql: query,
             params
@@ -53,9 +56,9 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
 
     private loadEventsAfterVersion: (stream: string, version: number) => Promise<[number, Event[]]> =
         async (stream: string, afterVersion: number) => {
-            const result: QueryResult<InStoreEvent> = await this.postgreSQLAdapter.query<InStoreEvent>(`SELECT * FROM events WHERE stream = $1 AND version > $2`, [stream, afterVersion])
+            const result: QueryResult<InStoreEvent> = await this.postgreSQLAdapter.query(`SELECT * FROM events WHERE stream = $1 AND version > $2`, [stream, afterVersion])
             const events: Event[] = result.rows
-                .map((row: InStoreEvent) => JSON.parse(row.body));
+                .map((row: InStoreEvent) => this.serializer.deserialize(row.body));
             const lastVersion: number = _.maxBy(result.rows, e => e.version)?.version ?? afterVersion;
             return [lastVersion, events];
         }

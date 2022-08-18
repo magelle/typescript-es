@@ -15,6 +15,7 @@ import {Snapshots} from "../../framework/04-with-snapshots/snapshots";
 import {WithSnapshotsInContainers} from "../../framework/05-with-snapshots-in-containers/WithSnapshotsInContainers";
 import {SnapshotsWithContainer} from "../../framework/05-with-snapshots-in-containers/snapshotsWithContainer";
 import {PostgresSnapshotsWithContainer} from "../../framework/postgresql/snapshots/PostgresSnapshotsWithContainer";
+import {JSONSerializer} from "../../framework/postgresql/serializer/JSONSerializer";
 
 if (!fc.readConfigureGlobal()) {
     // Global config of Jest has been ignored, we will have a timeout after 5000ms
@@ -31,9 +32,18 @@ describe('Counter event sourcing', () => {
 
     beforeAll(async () => {
         const postgreSQLAdapter = await buildPostgresqlAdapter();
-        eventStore = new PostgresEventStoreWithVersion(postgreSQLAdapter);
-        snapshots = new PostgresSnapshots(postgreSQLAdapter);
-        snapshotsWithContainer = new PostgresSnapshotsWithContainer(postgreSQLAdapter);
+        eventStore = new PostgresEventStoreWithVersion(
+            postgreSQLAdapter,
+            new JSONSerializer()
+        );
+        snapshots = new PostgresSnapshots(
+            postgreSQLAdapter,
+            new JSONSerializer()
+        );
+        snapshotsWithContainer = new PostgresSnapshotsWithContainer(
+            postgreSQLAdapter,
+            new JSONSerializer()
+        );
     })
 
     afterAll(async () => {
