@@ -32,17 +32,19 @@ export class PostgresSimpleEventStore<Event> implements SimpleEventStore<Event> 
     }
 
     private insertEvents: (event: InStoreEvent[]) => Promise<void> = async (event: InStoreEvent[]) => {
-        let query = `INSERT INTO events (id, stream, version, body) VALUES ($1, $2, $3, $4)`;
-        const queries = event.map((e: InStoreEvent) => [
+        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + event.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
+        const values = event.flatMap((e: InStoreEvent) => [
             e.id,
             e.stream,
             e.version,
             e.body,
-        ]).map((params: any[]) => ({
-            sql: query,
-            params
-        }));
-        await this.postgreSQLAdapter.multipleQueryInTransaction(queries);
+        ]);
+
+        const queries = {
+            text: query,
+            values: values
+        }
+        await this.postgreSQLAdapter.queries(queries);
     }
 
     private getLastVersion: (stream: string) => Promise<number> = async (stream: string) => {

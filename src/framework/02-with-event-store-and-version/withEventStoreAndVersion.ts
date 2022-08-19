@@ -12,13 +12,13 @@ export class WithEventStoreAndVersion<Command, State, Event> implements EventSto
     ) {
     }
 
-    public async handle(command: Command): Promise<Event[]> {
+    public handle = async(command: Command): Promise<Event[]> => {
         const [version, pastEvents]: [number, Event[]] = await this.eventStore.loadEvents(this.stream)
         const state: State = _.reduce(pastEvents, this.decider.evolve, this.decider.initialState)
         return await this.handleCommand(version, state, command)
     }
 
-    private async handleCommand(version: number, state: State, command: Command): Promise<Event[]> {
+    private handleCommand = async (version: number, state: State, command: Command): Promise<Event[]> => {
         const events: Event[] = this.decider.decide(command, state)
         const result: Either<[number, Event[]], number> = await this.eventStore.tryAppendEvents(this.stream, version, events)
         return await pipe(result, match(

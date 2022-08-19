@@ -15,12 +15,12 @@ export class WithSnapshots<Command, State, Event> implements EventStore<Command,
     ) {
     }
 
-    public async handle(command: Command): Promise<Event[]> {
+    public handle = async (command: Command): Promise<Event[]> => {
         const [version, state]: [number, State] = await this.loadState()
         return await this.handleCommand(version!, state, command)
     }
 
-    private async handleCommand(version: number, state: State, command: Command): Promise<Event[]> {
+    private handleCommand = async (version: number, state: State, command: Command): Promise<Event[]> => {
         const events: Event[] = this.decider.decide(command, state)
         const result: Either<[number, Event[]], number> = await this.eventStore.tryAppendEvents(this.stream, version, events)
         return await pipe(result, match(
@@ -29,7 +29,7 @@ export class WithSnapshots<Command, State, Event> implements EventStore<Command,
                 return this.handleCommand(actualVersion, actualState, command)
             },
             (version: number) => {
-                if(this.isTimeToSnapshot(version)) {
+                if (this.isTimeToSnapshot(version)) {
                     const newState = _.reduce(events, this.decider.evolve, state!)
                     this.snapshots.saveSnapshot(this.stream, version, newState)
                 }
@@ -38,7 +38,7 @@ export class WithSnapshots<Command, State, Event> implements EventStore<Command,
         ))
     }
 
-    private async loadState(): Promise<[number, State]> {
+    private loadState = async (): Promise<[number, State]> => {
         let [snapVersion, snapState] = await this.snapshots.tryLoadSnapshot(this.stream);
         if (!snapState) {
             snapVersion = 0
@@ -52,7 +52,7 @@ export class WithSnapshots<Command, State, Event> implements EventStore<Command,
         return [lastVersion, state]
     }
 
-    private isTimeToSnapshot(version: number) {
+    private isTimeToSnapshot = (version: number) => {
         return version % 1 === 0;
     }
 }

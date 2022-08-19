@@ -11,7 +11,7 @@ export class PostgresSnapshotsWithContainer<State> implements SnapshotsWithConta
     ) {
     }
 
-    async saveSnapshot(stream: string, container: string, newVersion: number, newState: any): Promise<void> {
+    saveSnapshot = async (stream: string, container: string, newVersion: number, newState: any): Promise<void> => {
         // UPDATE if exists, INSERT if not exists
         const serializedState = this.serializer.serialize(newState);
         await this.postgreSQLAdapter.query<State>(
@@ -20,7 +20,7 @@ export class PostgresSnapshotsWithContainer<State> implements SnapshotsWithConta
         )
     }
 
-    async tryLoadSnapshot(stream: string, container: string): Promise<[number, State | undefined]> {
+    tryLoadSnapshot = async (stream: string, container: string): Promise<[number, State | undefined]> => {
         const states: QueryResult<{ version: number, body: string }> =
             await this.postgreSQLAdapter.query<{ version: number, body: string }>(
                 `SELECT version, body FROM snapshots_with_containers WHERE stream = $1 AND container = $2`,

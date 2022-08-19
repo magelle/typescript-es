@@ -23,8 +23,8 @@ export const up = (pgm: any) => {
         version: {type: 'integer', notNull: true},
         body: {type: 'json', notNull: true},
     }),
-        pgm.createConstraint('snapshots_with_containers', 'unique_stream_container_version', {unique: ['stream', 'container', 'version']}),
-        pgm.createIndex('snapshots_with_containers', ['stream', 'container', 'version'], {unique: true})
+    pgm.createConstraint('snapshots_with_containers', 'unique_stream_container_version', {unique: ['stream', 'container', 'version']}),
+    pgm.createIndex('snapshots_with_containers', ['stream', 'container', 'version'], {unique: true})
 };
 
 export const down = (pgm: any) => {

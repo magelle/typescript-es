@@ -23,7 +23,7 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
         }
 
     public tryAppendEvents: (s: Stream, v: number, e: Event[]) => Promise<Either<[number, Event[]], number>> = async (stream: string, version: number, events: Event[]) => {
-        const toStore: InStoreEvent[] = events.map((e: Event) => ({
+        const toStore: InStoreEvent[] = _.map(events, (e: Event) => ({
             id: uuidv4(),
             stream: stream,
             version: ++version,
@@ -41,17 +41,19 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
     }
 
     private insertEvents: (event: InStoreEvent[]) => Promise<void> = async (event: InStoreEvent[]) => {
-        let query = `INSERT INTO events (id, stream, version, body) VALUES ($1, $2, $3, $4)`;
-        const queries = event.map((e: InStoreEvent) => [
+        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + event.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
+        const values = event.flatMap((e: InStoreEvent) => [
             e.id,
             e.stream,
             e.version,
             e.body,
-        ]).map((params: any[]) => ({
-            sql: query,
-            params
-        }));
-        await this.postgreSQLAdapter.multipleQueryInTransaction(queries);
+        ]);
+
+        const queries = {
+            text: query,
+            values: values
+        }
+        await this.postgreSQLAdapter.queries(queries);
     }
 
     private loadEventsAfterVersion: (stream: string, version: number) => Promise<[number, Event[]]> =

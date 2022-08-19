@@ -65,7 +65,7 @@ describe('Counter event sourcing', () => {
                 })
 
                 function tryHandle(c: CounterCommand): Promise<CounterEvent[]> {
-                    console.log(`sending command ${c}`)
+                    console.log(`sending command ${JSON.stringify(c)}`)
                     return es.handle(c).catch(e => {
                         console.log(e);
                         return [];
@@ -111,7 +111,10 @@ describe('Counter event sourcing', () => {
 
     it('should should be faster with in memory state', async () => {
         const stream = uuidv4().toString()
-        es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, eventStore)
+        es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
+            loadEvents: eventStore.loadEvents,
+            tryAppendEvents: eventStore.tryAppendEvents
+        })
 
         const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
         const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
@@ -119,7 +122,7 @@ describe('Counter event sourcing', () => {
         // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')
-        await expectExecutionTime(5000, async () => {
+        await expectExecutionTime(2100, async () => {
             for (const action of actions) {
                 await es.handle(action)
             }
@@ -173,6 +176,7 @@ async function expectExecutionTime(maxTime: number, fct: () => Promise<any>): Pr
     const start = Date.now();
     await fct()
     const end = Date.now();
+    console.log(`took ${end - start}ms which is less than ${maxTime}ms`)
     expect(end - start).toBeLessThan(maxTime);
 }
 

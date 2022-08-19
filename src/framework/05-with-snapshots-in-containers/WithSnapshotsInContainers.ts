@@ -19,17 +19,17 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
         this.container = this.getContainerFromDecideHash(decider)
     }
 
-    private getContainerFromDecideHash(decider: Decider<Command, State, Event>): string {
+    private getContainerFromDecideHash = (decider: Decider<Command, State, Event>): string => {
         // Make this better to avoid having a new container when the decider is refactored
         return hash(decider.evolve.toString()).toString();
     }
 
-    public async handle(command: Command): Promise<Event[]> {
+    public handle = async (command: Command): Promise<Event[]> => {
         const [version, state]: [number, State] = await this.loadState()
         return await this.handleCommand(version!, state, command)
     }
 
-    private async handleCommand(version: number, state: State, command: Command): Promise<Event[]> {
+    private handleCommand = async (version: number, state: State, command: Command): Promise<Event[]> => {
         const events: Event[] = this.decider.decide(command, state)
         const result: Either<[number, Event[]], number> = await this.eventStore.tryAppendEvents(this.stream, version, events)
         return await pipe(result, match(
@@ -38,7 +38,7 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
                 return this.handleCommand(actualVersion, actualState, command)
             },
             (version: number) => {
-                if(this.isTimeToSnapshot(version)) {
+                if (this.isTimeToSnapshot(version)) {
                     const newState = _.reduce(events, this.decider.evolve, state!)
                     this.snapshots.saveSnapshot(this.stream, this.container, version, newState)
                 }
@@ -47,7 +47,7 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
         ))
     }
 
-    private async loadState(): Promise<[number, State]> {
+    private loadState = async (): Promise<[number, State]> => {
         let [snapVersion, snapState] = await this.snapshots.tryLoadSnapshot(this.stream, this.container);
         if (!snapState) {
             snapVersion = 0
@@ -61,7 +61,7 @@ export class WithSnapshotsInContainers<Command, State, Event> implements EventSt
         return [lastVersion, state]
     }
 
-    private isTimeToSnapshot(version: number) {
+    private isTimeToSnapshot = (version: number) => {
         return version % 1 === 0;
     }
 }

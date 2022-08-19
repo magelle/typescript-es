@@ -10,14 +10,14 @@ export class WithEventStore<Command, State, Event> implements EventStore<Command
     ) {
     }
 
-    public async handle(command: Command) {
+    public handle = async (command: Command) => {
         const state = await this.computeState()
         const events = this.decider.decide(command, state)
         await this.eventStore.appendEvents(this.stream, events)
         return events
     }
 
-    private async computeState() {
+    private computeState = async () => {
         return _.reduce(await this.eventStore.loadEvents(this.stream, 0), this.decider.evolve, this.decider.initialState);
     }
 }

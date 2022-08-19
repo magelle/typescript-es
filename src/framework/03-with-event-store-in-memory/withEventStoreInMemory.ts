@@ -15,12 +15,12 @@ export class WithEventStoreInMemory<Command, State, Event> implements EventStore
     ) {
     }
 
-    public async handle(command: Command): Promise<Event[]> {
+    public handle = async (command: Command): Promise<Event[]> => {
         await this.init()
         return await this.handleCommand(this.version!, this.state!, command)
     }
 
-    private async handleCommand(version: number, state: State, command: Command): Promise<Event[]> {
+    private handleCommand = async (version: number, state: State, command: Command): Promise<Event[]> => {
         const events: Event[] = this.decider.decide(command, state)
         const result: Either<[number, Event[]], number> = await this.eventStore.tryAppendEvents(this.stream, version, events)
         return await pipe(result, match(
@@ -36,7 +36,7 @@ export class WithEventStoreInMemory<Command, State, Event> implements EventStore
         ))
     }
 
-    private async init() {
+    private init = async () => {
         if (this.version !== undefined) return
         console.info('Initializing event store of stream', this.stream)
         const [version, pastEvents]: [number, Event[]] = await this.eventStore.loadEvents(this.stream)

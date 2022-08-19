@@ -1,4 +1,4 @@
-import {Pool, QueryResult} from 'pg';
+import {Pool, QueryConfig, QueryResult} from 'pg';
 import {PostgreSQLConfig} from './postgresql.config';
 
 export class PostgreSQLAdapter {
@@ -7,33 +7,21 @@ export class PostgreSQLAdapter {
     constructor(private readonly config: PostgreSQLConfig) {
     }
 
-    public async query<T>(
+    public query = async <T>(
         query: string,
         params: unknown[] = []
-    ): Promise<QueryResult<T>> {
+    ): Promise<QueryResult<T>> => {
         return this.pool!.query(query, params);
     }
 
-    public async multipleQueryInTransaction(queries: Query[]): Promise<void> {
-        const client = await this.pool!.connect();
-
-        try {
-            await client.query('BEGIN');
-
-            for (const query of queries) {
-                await client.query(query.sql, query.params);
-            }
-
-            await client.query('COMMIT');
-        } catch (err) {
-            await client.query('ROLLBACK');
-            throw err;
-        } finally {
-            client.release();
-        }
+    public queries = async (
+        query: QueryConfig,
+    ): Promise<QueryResult> => {
+        console.log(JSON.stringify(query.values))
+        return await this.pool!.query(query);
     }
 
-    public async connect(): Promise<void> {
+    public connect = async (): Promise<void> => {
         const pool = new Pool({
             connectionString: this.config.uri,
         });
@@ -49,7 +37,7 @@ export class PostgreSQLAdapter {
         this.pool = pool;
     }
 
-    public async close(): Promise<void> {
+    public close = async (): Promise<void> => {
         await this.pool!.end();
     }
 }
