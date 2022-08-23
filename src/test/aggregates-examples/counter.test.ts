@@ -31,7 +31,7 @@ describe('Counter event sourcing', () => {
     let es: EventStore<CounterCommand, CounterEvent>
 
     beforeAll(async () => {
-        const postgreSQLAdapter = await buildPostgresqlAdapter();
+        postgreSQLAdapter = await buildPostgresqlAdapter();
         eventStore = new PostgresEventStoreWithVersion(
             postgreSQLAdapter,
             new JSONSerializer()
@@ -65,7 +65,6 @@ describe('Counter event sourcing', () => {
                 })
 
                 function tryHandle(c: CounterCommand): Promise<CounterEvent[]> {
-                    console.log(`sending command ${JSON.stringify(c)}`)
                     return es.handle(c).catch(e => {
                         console.log(e);
                         return [];
@@ -81,7 +80,6 @@ describe('Counter event sourcing', () => {
                     if (counterState.value > 1000) throw new Error(`counter value is ${counterState.value}`)
                     if (counterState.value < 0) throw new Error(`counter value is ${counterState.value}`)
                 }
-                console.log("Done")
             }).beforeEach(() => {
                 jest.resetAllMocks();
             })

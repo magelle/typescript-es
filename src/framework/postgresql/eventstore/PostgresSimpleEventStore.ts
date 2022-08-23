@@ -22,29 +22,15 @@ export class PostgresSimpleEventStore<Event> implements SimpleEventStore<Event> 
 
     public appendEvents: (stream: string, events: Event[]) => Promise<void> = async (stream: string, events: Event[]) => {
         let actualVersion = await this.getLastVersion(stream)
-        const toStore: InStoreEvent[] = events.map((e: Event) => ({
-            id: uuidv4(),
-            stream: stream,
-            version: ++actualVersion,
-            body: this.serializer.serialize(e)
-        }))
-        await this.insertEvents(toStore)
-    }
+        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
+        const values = events.flatMap((e: Event) => ([
+            uuidv4(),
+            stream,
+            ++actualVersion,
+            this.serializer.serialize(e)
+        ]))
 
-    private insertEvents: (event: InStoreEvent[]) => Promise<void> = async (event: InStoreEvent[]) => {
-        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + event.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
-        const values = event.flatMap((e: InStoreEvent) => [
-            e.id,
-            e.stream,
-            e.version,
-            e.body,
-        ]);
-
-        const queries = {
-            text: query,
-            values: values
-        }
-        await this.postgreSQLAdapter.queries(queries);
+        await this.postgreSQLAdapter.queries({text: query, values});
     }
 
     private getLastVersion: (stream: string) => Promise<number> = async (stream: string) => {
