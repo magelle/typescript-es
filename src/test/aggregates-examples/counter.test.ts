@@ -51,7 +51,6 @@ describe('Counter event sourcing', () => {
     })
 
     it('counter value should be under 1000', async () => {
-        // { seed: -742561100, path: "1:1:0", endOnFailure: true }
         await fc.assert(
             fc.asyncProperty(RandomCommands, fc.scheduler(), async (commands, s) => {
                 const stream = uuidv4().toString()
@@ -114,13 +113,13 @@ describe('Counter event sourcing', () => {
             tryAppendEvents: eventStore.tryAppendEvents
         })
 
-        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
-        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const increments: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Decrement'}));
         const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
         // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')
-        await expectExecutionTime(2100, async () => {
+        await expectExecutionTime(2300, async () => {
             for (const action of actions) {
                 await es.handle(action)
             }
@@ -131,8 +130,8 @@ describe('Counter event sourcing', () => {
     it('should be faster with snapshots (it\'s not :( )', async () => {
         const stream = uuidv4().toString()
 
-        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
-        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
+        const increments: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Decrement'}));
         const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
         // we should go up to 1 000 000 events in less than 300 ms
 
@@ -149,9 +148,9 @@ describe('Counter event sourcing', () => {
     it('should be faster with snapshots in containers (it\'s not :( )', async () => {
         const stream = uuidv4().toString()
 
-        const increments: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Increment'}));
-        const decrements: CounterCommand[] = _.map(_.range(1000), (_) => ({__type: 'Decrement'}));
-        const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
+        const increments: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Increment'}));
+        const decrements: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Decrement'}));
+        const actions: CounterCommand[] = _.flatMap(_.range(1, 1), (_) => [...increments, ...decrements])
         // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')

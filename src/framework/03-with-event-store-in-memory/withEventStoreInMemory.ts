@@ -38,8 +38,8 @@ export class WithEventStoreInMemory<Command, State, Event> implements EventStore
 
     private init = async () => {
         if (this.version !== undefined) return
-        console.info('Initializing event store of stream', this.stream)
         const [version, pastEvents]: [number, Event[]] = await this.eventStore.loadEvents(this.stream)
+        console.info('Initializing event store of stream', this.stream)
         const state: State = _.reduce(pastEvents, this.decider.evolve, this.decider.initialState)
         this.version = version
         this.state = state

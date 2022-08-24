@@ -24,15 +24,19 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
 
     public tryAppendEvents: (s: Stream, v: number, e: Event[]) => Promise<Either<[number, Event[]], number>> = async (stream: string, version: number, events: Event[]) => {
         const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
-        const values = _.flatMap(events, (e: Event) => ([
-            uuidv4(),
-            stream,
-            ++version,
-            this.serializer.serialize(e)
-        ]))
+        let eventVersion = version + 1
+        const values = _.flatMap(events, (e: Event, i: number) => {
+            eventVersion += 1
+            return [
+                uuidv4(),
+                stream,
+                version + i + 1,
+                this.serializer.serialize(e)
+            ]
+        })
         try {
             await this.postgreSQLAdapter.queries({text: query, values});
-            return right(version);
+            return right(eventVersion);
         } catch (e) {
             // Error should be : duplicate key value violates unique constraint "events_stream_version_unique_index"
             console.log(e)

@@ -17,7 +17,6 @@ export class PostgreSQLAdapter {
     public queries = async (
         query: QueryConfig,
     ): Promise<QueryResult> => {
-        console.log(JSON.stringify(query.values))
         return await this.pool!.query(query);
     }
 
