@@ -14,9 +14,9 @@ export class PostgreSQLAdapter {
         return this.pool!.query(query, params);
     }
 
-    public queries = async (
+    public queries = async <T>(
         query: QueryConfig,
-    ): Promise<QueryResult> => {
+    ): Promise<QueryResult<T>> => {
         return await this.pool!.query(query);
     }
 
