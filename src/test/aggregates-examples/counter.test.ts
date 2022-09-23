@@ -106,6 +106,31 @@ describe('Counter event sourcing', () => {
         console.log('End Adding events')
     });
 
+    it('should handle lots of events (with 1 000 000 events)', async () => {
+        const stream = uuidv4().toString()
+        es = new WithEventStoreAndVersion<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
+            loadEvents: eventStore.loadEvents,
+            tryAppendEvents: eventStore.tryAppendEvents,
+        })
+
+        const increments: CounterEvent[] = _.map(_.range(500), (_) => ({__type: 'Incremented'}));
+        const decrements: CounterEvent[] = _.map(_.range(500), (_) => ({__type: 'Decremented'}));
+
+        let version = 0;
+        const events = [...increments, ...decrements];
+        while (true) {
+            await eventStore.tryAppendEvents(stream, version, events)
+            version += events.length
+            if (version >= 900000) break;
+        }
+
+        console.log('Start exec command with ' + (900000) + 'events')
+        await expectExecutionTime(1000, async () => {
+            await es.handle({__type: 'Increment'})
+        })
+        console.log('End exec command')
+    });
+
     it('should should be faster with in memory state', async () => {
         const stream = uuidv4().toString()
         es = new WithEventStoreInMemory<CounterCommand, CounterState, CounterEvent>(counterDecider, stream, {
@@ -116,7 +141,6 @@ describe('Counter event sourcing', () => {
         const increments: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Increment'}));
         const decrements: CounterCommand[] = _.map(_.range(1, 1000), (_) => ({__type: 'Decrement'}));
         const actions: CounterCommand[] = _.flatMap(_.range(1), (_) => [...increments, ...decrements])
-        // we should go up to 1 000 000 events in less than 300 ms
 
         console.log('Start Adding events')
         await expectExecutionTime(2300, async () => {

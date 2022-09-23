@@ -10,6 +10,13 @@
 
 Project example with this tools : [nodejs-postgresql-testcontainers](https://github.com/Yengas/nodejs-postgresql-testcontainers))
 
+## To do profiling
+
+- add ```--prof``` as node option
+- run a test
+- run ```node --prof-process --preprocess -j isolate*.log > profile.v8log.json``` to extract info
+- open it with https://www.speedscope.app/ or chrome de tools
+
 ## Next steps
 
 - ☑️ Append several events at a time (bulk insert)
@@ -26,3 +33,4 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ▢ handle (Processes) and make an exemple
 - ☑️ Try to compose the list of todos with several deciders
 - ▢ How to handle information computed from the current time ?
+
