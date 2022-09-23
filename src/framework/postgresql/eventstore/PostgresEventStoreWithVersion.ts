@@ -23,7 +23,7 @@ export class PostgresEventStoreWithVersion<Event> implements EventStoreWithVersi
         }
 
     public tryAppendEvents: (s: Stream, v: number, e: Event[]) => Promise<Either<[number, Event[]], number>> = async (stream: string, version: number, events: Event[]) => {
-        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
+        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
         let eventVersion = version + 1
         const values = _.flatMap(events, (e: Event, i: number) => {
             eventVersion += 1
