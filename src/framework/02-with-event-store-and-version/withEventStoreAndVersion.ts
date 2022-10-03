@@ -1,21 +1,32 @@
 import * as _ from "lodash";
 import {Either, match} from "fp-ts/Either";
 import {pipe} from "fp-ts/function";
-import {Decider, EventStore, Stream} from "../framework";
+import {Decider, EventStore, Stream as StreamName} from "../framework";
 import {EventStoreWithVersion} from "../eventStoreWithVersion";
+import * as Stream from "stream";
 
 export class WithEventStoreAndVersion<Command, State, Event> implements EventStore<Command, Event> {
     constructor(
         private readonly decider: Decider<Command, State, Event>,
-        private readonly stream: Stream,
+        private readonly stream: StreamName,
         private readonly eventStore: EventStoreWithVersion<Event>,
     ) {
     }
 
     public handle = async(command: Command): Promise<Event[]> => {
-        const [version, pastEvents]: [number, Event[]] = await this.eventStore.loadEvents(this.stream)
-        const state: State = _.reduce(pastEvents, this.decider.evolve, this.decider.initialState)
+        const {version, state} = await this.getState();
         return await this.handleCommand(version, state, command)
+    }
+
+    private async getState() {
+        const [version, pastEvents]: [number, Stream.Readable] = await this.eventStore.stream(this.stream)
+
+        let state = this.decider.initialState
+        for await (const event of pastEvents) {
+            state = this.decider.evolve(state, event)
+        }
+
+        return {version, state};
     }
 
     private handleCommand = async (version: number, state: State, command: Command): Promise<Event[]> => {

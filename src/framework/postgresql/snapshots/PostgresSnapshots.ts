@@ -7,7 +7,7 @@ import {Serializer} from "../../framework";
 export class PostgresSnapshots<State> implements Snapshots<State> {
     constructor(
         private readonly postgreSQLAdapter: PostgreSQLAdapter,
-        private readonly serializer: Serializer,
+        private readonly serializer: Serializer<any>,
     ) {
     }
 

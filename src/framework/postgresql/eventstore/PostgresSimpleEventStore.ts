@@ -22,7 +22,7 @@ export class PostgresSimpleEventStore<Event> implements SimpleEventStore<Event> 
 
     public appendEvents: (stream: string, events: Event[]) => Promise<void> = async (stream: string, events: Event[]) => {
         let actualVersion = await this.getLastVersion(stream)
-        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
+        const query = `INSERT INTO events (id, stream, version, body) VALUES ` + events.map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ');
         const values = events.flatMap((e: Event) => ([
             uuidv4(),
             stream,
@@ -38,3 +38,4 @@ export class PostgresSimpleEventStore<Event> implements SimpleEventStore<Event> 
         return result.rows[0]?.version ?? 0;
     }
 }
+

@@ -30,6 +30,8 @@ Project example with this tools : [nodejs-postgresql-testcontainers](https://git
 - ▢ Find faster serialization protocol (faster than JSON)
 - ▢ Handle upcasters (without deserialization)
 - ▢ handle Views (Instant and stored) and make an exemple
+  - ▢ Stored views with states updates
+  - ▢ Stored views with partial updates
 - ▢ handle (Processes) and make an exemple
 - ☑️ Try to compose the list of todos with several deciders
 - ▢ How to handle information computed from the current time ?
