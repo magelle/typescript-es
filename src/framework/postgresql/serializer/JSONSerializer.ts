@@ -1,6 +1,6 @@
 import {Serializer} from "../../framework";
 
-export class JSONSerializer implements Serializer {
+export class JSONSerializer implements Serializer<string> {
   serialize = <T>(value: T): string => {
     return JSON.stringify(value)
   }

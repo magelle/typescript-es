@@ -25,9 +25,11 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "bson": "^4.7.0",
     "fp-ts": "^2.12.2",
     "hash": "^0.2.1",
     "lodash": "^4.17.21",
+    "messagepack": "^1.1.12",
     "node-pg-migrate": "^6.2.2",
     "pg": "^8.7.3",
     "ts-pattern": "^4.0.5",
