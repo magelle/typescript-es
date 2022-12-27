@@ -39,6 +39,7 @@ describe('Todo counter', () => {
         const decider = product(todos, todoCounter)
         es = new WithEventStoreInMemory(decider, stream, {
             loadEvents: eventStore.loadEvents,
+            stream: eventStore.stream,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
     })

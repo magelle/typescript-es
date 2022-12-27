@@ -27,6 +27,7 @@ describe('Event sourced TODO', () => {
         const todosInMap = toMap<string, TodoCommand, TodoState, TodoEvent>(todoDecider)
         es = new WithEventStoreInMemory(todosInMap, stream, {
             loadEvents: eventStore.loadEvents,
+            stream: eventStore.stream,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
     })

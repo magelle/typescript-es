@@ -26,6 +26,7 @@ describe('Event sourced TODO', () => {
         stream = uuidv4().toString()
         es = new WithEventStoreInMemory<TodoCommand, TodoState, TodoEvent>(todoDecider, stream, {
             loadEvents: eventStore.loadEvents,
+            stream: eventStore.stream,
             tryAppendEvents: eventStore.tryAppendEvents,
         })
     })
