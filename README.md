@@ -1,4 +1,4 @@
-# Event souring project in ES
+# Event sourcing project in ES
 
 ## Tools
 - [fp-ts](https://gcanti.github.io/fp-ts/)
